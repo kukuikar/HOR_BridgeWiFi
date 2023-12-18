@@ -1,22 +1,23 @@
 #include <Arduino.h>
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <GyverMotor2.h>
 #include <GParser.h>
+
 // Определяем название и пароль точки доступа
 #include "WIFI_AP.h"
 
-const int BRIDGE_MOTOR_PIN_DIR = 2;
-const int BRIDGE_MOTOR_PIN_PWM = 3;
+const int8_t BRIDGE_MOTOR_PIN_DIR = 2;
+const int8_t BRIDGE_MOTOR_PIN_PWM = 3;
 
-const int TROLLEY_MOTOR_PIN_DIR = 5;
-const int TROLLEY_MOTOR_PIN_PWM = 6;
+const int8_t TROLLEY_MOTOR_PIN_DIR = 5;
+const int8_t TROLLEY_MOTOR_PIN_PWM = 6;
 
-const int WINCH_MOTOR_PIN_DIR = 7;
-const int WINCH_MOTOR_PIN_PWM = 1;
+const int8_t WINCH_MOTOR_PIN_DIR = 7;
+const int8_t WINCH_MOTOR_PIN_PWM = 1;
 
 const char* HELLO_MSG = "_A_BRIDGE";
-const byte BUFFER_SIZE = 32;
+const int8_t BUFFER_SIZE = 32;
 
 static uint32_t tmr_ping = millis();
 static uint32_t tmr_ping_interval = 130;
