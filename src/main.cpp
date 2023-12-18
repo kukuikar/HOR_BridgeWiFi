@@ -6,7 +6,6 @@
 // Определяем название и пароль точки доступа
 #include "WIFI_AP.h"
 
-const char TERMINATOR = ';';
 const int BRIDGE_MOTOR_PIN_DIR = 2;
 const int BRIDGE_MOTOR_PIN_PWM = 3;
 
@@ -19,6 +18,9 @@ const int WINCH_MOTOR_PIN_PWM = 1;
 const char* HELLO_MSG = "_A_BRIDGE";
 const byte BUFFER_SIZE = 32;
 
+static uint32_t tmr_ping = millis();
+static uint32_t tmr_ping_interval = 130;
+
 GMotor2<DRIVER2WIRE> MOT_Bridge(  BRIDGE_MOTOR_PIN_DIR,   BRIDGE_MOTOR_PIN_PWM);
 GMotor2<DRIVER2WIRE> MOT_Trolley( TROLLEY_MOTOR_PIN_DIR,  TROLLEY_MOTOR_PIN_PWM);
 GMotor2<DRIVER2WIRE> MOT_Winch(   WINCH_MOTOR_PIN_DIR,    WINCH_MOTOR_PIN_PWM);
@@ -26,6 +28,7 @@ GMotor2<DRIVER2WIRE> MOT_Winch(   WINCH_MOTOR_PIN_DIR,    WINCH_MOTOR_PIN_PWM);
 WiFiUDP UDP;
 
 void stopAllMotors();
+void ping();
 
 void setup()
 {
@@ -40,9 +43,7 @@ void setup()
     delay(250);
   }  
 
-  UDP.beginPacket(WiFi.gatewayIP(), __PORT);
-  UDP.printf(HELLO_MSG);
-  UDP.endPacket();
+  ping();
 
   UDP.begin(__PORT);
 
@@ -63,11 +64,22 @@ void loop()
 {
   if (WiFi.status() != WL_CONNECTED)
   {
-    setup();
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      Serial.print(".");
+      delay(250);
+    }
+  }
+
+  if (millis() - tmr_ping > tmr_ping_interval)
+  {
+    tmr_ping = millis();
+    ping();
   }
 
   if (UDP.parsePacket())
   {
+    //PACKET 0,1,-255,-255,-255;
     Serial.print("Received packet! Size: ");
     Serial.println(UDP.parsePacket());
     Serial.print("Packet: ");
@@ -82,9 +94,14 @@ void loop()
       switch (ints[0])
       {
       case 0:
-        MOT_Bridge.setSpeed(ints[1]);
-        MOT_Trolley.setSpeed(ints[2]);
-        MOT_Winch.setSpeed(ints[3]);
+        if (ints[1])
+        {
+          MOT_Bridge.setSpeed(ints[2]);
+          MOT_Trolley.setSpeed(ints[3]);
+          MOT_Winch.setSpeed(ints[4]);
+        }
+        else
+          stopAllMotors();
         break;
 
       default:
@@ -104,4 +121,11 @@ void stopAllMotors()
   MOT_Bridge.setSpeedPerc(0);
   MOT_Trolley.setSpeedPerc(0);
   MOT_Winch.setSpeedPerc(0);
+}
+
+void ping()
+{
+  UDP.beginPacket(WiFi.gatewayIP(), __PORT);
+  UDP.printf(HELLO_MSG);
+  UDP.endPacket();
 }
