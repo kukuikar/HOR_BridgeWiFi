@@ -1,25 +1,28 @@
 #include <Arduino.h>
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <GyverMotor2.h>
 #include <GParser.h>
 // Определяем название и пароль точки доступа
 #include "WIFI_AP.h"
 
-const int BRIDGE_MOTOR_PIN_DIR = 2;
-const int BRIDGE_MOTOR_PIN_PWM = 3;
+const uint8_t BRIDGE_MOTOR_PIN_DIR = D2;
+const uint8_t BRIDGE_MOTOR_PIN_PWM = D3;
 
-const int TROLLEY_MOTOR_PIN_DIR = 5;
-const int TROLLEY_MOTOR_PIN_PWM = 6;
+const uint8_t TROLLEY_MOTOR_PIN_DIR = D5;
+const uint8_t TROLLEY_MOTOR_PIN_PWM = D6;
 
-const int WINCH_MOTOR_PIN_DIR = 7;
-const int WINCH_MOTOR_PIN_PWM = 1;
+const uint8_t WINCH_MOTOR_PIN_DIR = D7;
+const uint8_t WINCH_MOTOR_PIN_PWM = D1;
 
 const char* HELLO_MSG = "_A_BRIDGE";
-const byte BUFFER_SIZE = 32;
+//const char* HELLO_MSG = "_B_SPREADER";
+//const char* HELLO_MSG = "_C_CRANES";
+//const char* HELLO_MSG = "_D_LIFTS";
+const uint8_t BUFFER_SIZE = 32;
 
 static uint32_t tmr_ping = millis();
-static uint32_t tmr_ping_interval = 130;
+static uint32_t tmr_ping_interval = 1354;
 
 GMotor2<DRIVER2WIRE> MOT_Bridge(  BRIDGE_MOTOR_PIN_DIR,   BRIDGE_MOTOR_PIN_PWM);
 GMotor2<DRIVER2WIRE> MOT_Trolley( TROLLEY_MOTOR_PIN_DIR,  TROLLEY_MOTOR_PIN_PWM);
@@ -43,7 +46,10 @@ void setup()
     delay(250);
   }  
 
-  ping();
+  Serial.println(WiFi.gatewayIP());
+  Serial.println(WiFi.localIP());
+  
+  ping();  
 
   UDP.begin(__PORT);
 
@@ -67,7 +73,9 @@ void loop()
     while (WiFi.status() != WL_CONNECTED)
     {
       Serial.print(".");
-      delay(250);
+      WiFi.mode(WIFI_STA);
+      WiFi.begin(__SSID, __PSWD);
+      delay(250);     
     }
   }
 
@@ -77,23 +85,27 @@ void loop()
     ping();
   }
 
-  if (UDP.parsePacket())
+  int packetSize = UDP.parsePacket();
+  if (packetSize)
   {
     //PACKET 0,1,-255,-255,-255;
     Serial.print("Received packet! Size: ");
-    Serial.println(UDP.parsePacket());
+    Serial.println(packetSize);
     Serial.print("Packet: ");
-    char buffer[BUFFER_SIZE];
-    if (UDP.read(buffer, BUFFER_SIZE))
+    char packet[BUFFER_SIZE];
+    int len = UDP.read(packet, BUFFER_SIZE);
+    if(len > 0)
     {
-      Serial.println(buffer);
-      GParser data(buffer);
+      packet[len] = '\0';
+
+      Serial.println(packet);
+      GParser data(packet);
       int ints[data.amount()];
       data.parseInts(ints);
 
       switch (ints[0])
       {
-      case 0:
+      case 0://BRIDGE
         if (ints[1])
         {
           MOT_Bridge.setSpeed(ints[2]);
