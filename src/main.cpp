@@ -94,11 +94,10 @@ void loop()
     Serial.print("Packet: ");
     char packet[BUFFER_SIZE];
     int len = UDP.read(packet, BUFFER_SIZE);
+    Serial.println(packet);
     if(len > 0)
     {
-      packet[len] = '\0';
-
-      Serial.println(packet);
+      packet[len] = '\0';      
       GParser data(packet);
       int ints[data.amount()];
       data.parseInts(ints);
