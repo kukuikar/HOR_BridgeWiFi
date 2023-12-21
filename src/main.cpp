@@ -6,14 +6,14 @@
 // Определяем название и пароль точки доступа
 #include "WIFI_AP.h"
 
-const int8_t BRIDGE_MOTOR_PIN_DIR = 2;
-const int8_t BRIDGE_MOTOR_PIN_PWM = 3;
+const int8_t BRIDGE_MOTOR_PIN_DIR = D2;
+const int8_t BRIDGE_MOTOR_PIN_PWM = D3;
 
-const int8_t TROLLEY_MOTOR_PIN_DIR = 5;
-const int8_t TROLLEY_MOTOR_PIN_PWM = 6;
+const int8_t TROLLEY_MOTOR_PIN_DIR = D5;
+const int8_t TROLLEY_MOTOR_PIN_PWM = D6;
 
-const int8_t WINCH_MOTOR_PIN_DIR = 7;
-const int8_t WINCH_MOTOR_PIN_PWM = 1;
+const int8_t WINCH_MOTOR_PIN_DIR = D7;
+const int8_t WINCH_MOTOR_PIN_PWM = D1;
 
 const char* HELLO_MSG = "_A_BRIDGE";
 //const char* HELLO_MSG = "_B_SPREADER";
