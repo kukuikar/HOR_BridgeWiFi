@@ -3,17 +3,20 @@
 #include <WiFiUdp.h>
 #include <GyverMotor2.h>
 #include <GParser.h>
+
 // Определяем название и пароль точки доступа
-#include "WIFI_AP.h"
+const char* __SSID = "HORIZONE";
+const char* __PSWD = "123456789";
+const uint32_t __PORT = 49152;
 
-const int8_t BRIDGE_MOTOR_PIN_DIR = D2;
-const int8_t BRIDGE_MOTOR_PIN_PWM = D3;
+const int8_t BRIDGE_MOTOR_PIN_DIR = 13;
+const int8_t BRIDGE_MOTOR_PIN_PWM = 12;
 
-const int8_t TROLLEY_MOTOR_PIN_DIR = D5;
-const int8_t TROLLEY_MOTOR_PIN_PWM = D6;
+const int8_t TROLLEY_MOTOR_PIN_DIR = 2;
+const int8_t TROLLEY_MOTOR_PIN_PWM = 0;
 
-const int8_t WINCH_MOTOR_PIN_DIR = D7;
-const int8_t WINCH_MOTOR_PIN_PWM = D1;
+const int8_t WINCH_MOTOR_PIN_DIR = 4;
+const int8_t WINCH_MOTOR_PIN_PWM = 5;
 
 const char* HELLO_MSG = "_A_BRIDGE";
 //const char* HELLO_MSG = "_B_SPREADER";
@@ -22,7 +25,7 @@ const char* HELLO_MSG = "_A_BRIDGE";
 const uint8_t BUFFER_SIZE = 32;
 
 static uint32_t tmr_ping = millis();
-static uint32_t tmr_ping_interval = 1354;
+static uint32_t tmr_ping_interval = 50; //1354;
 
 GMotor2<DRIVER2WIRE> MOT_Bridge(  BRIDGE_MOTOR_PIN_DIR,   BRIDGE_MOTOR_PIN_PWM);
 GMotor2<DRIVER2WIRE> MOT_Trolley( TROLLEY_MOTOR_PIN_DIR,  TROLLEY_MOTOR_PIN_PWM);
@@ -49,25 +52,38 @@ void setup()
   Serial.println(WiFi.gatewayIP());
   Serial.println(WiFi.localIP());
   
-  ping();  
+  //ping();  
+
+  UDP.beginPacket(WiFi.gatewayIP(), __PORT);
+  UDP.printf(HELLO_MSG);
+  UDP.endPacket();
 
   UDP.begin(__PORT);
 
-  MOT_Bridge.setMinDuty(70); // мин. ШИМ
+  MOT_Bridge.setMinDuty(220); // мин. ШИМ
   MOT_Bridge.reverse(1);     // реверс
   MOT_Bridge.setDeadtime(5); // deadtime
+  MOT_Bridge.smoothMode(1); 
 
-  MOT_Trolley.setMinDuty(70); // мин. ШИМ
+  MOT_Trolley.setMinDuty(220); // мин. ШИМ
   MOT_Trolley.reverse(1);     // реверс
   MOT_Trolley.setDeadtime(5); // deadtime
+  MOT_Trolley.smoothMode(1); 
+  
 
-  MOT_Winch.setMinDuty(70); // мин. ШИМ
+  MOT_Winch.setMinDuty(220); // мин. ШИМ
   MOT_Winch.reverse(1);     // реверс
   MOT_Winch.setDeadtime(5); // deadtime
+  MOT_Winch.smoothMode(1); 
+  
 }
 
 void loop()
 {
+  MOT_Bridge.tick();
+  MOT_Trolley.tick();
+  MOT_Winch.tick();
+
   if (WiFi.status() != WL_CONNECTED)
   {
     while (WiFi.status() != WL_CONNECTED)
@@ -79,11 +95,11 @@ void loop()
     }
   }
 
-  if (millis() - tmr_ping > tmr_ping_interval)
+  /*if (millis() - tmr_ping > tmr_ping_interval)
   {
     tmr_ping = millis();
     ping();
-  }
+  }*/
 
   int packetSize = UDP.parsePacket();
   if (packetSize)
@@ -107,31 +123,47 @@ void loop()
       case 0:
         if (ints[1])
         {
-          MOT_Bridge.setSpeed(ints[2]);
-          MOT_Trolley.setSpeed(ints[3]);
-          MOT_Winch.setSpeed(ints[4]);
+          //delay(3);
+              
+          MOT_Bridge.setSpeed(ints[3]);
+          MOT_Trolley.setSpeed(ints[4]);
+          MOT_Winch.setSpeed(ints[5]);
+
+          MOT_Bridge.tick();
+          MOT_Trolley.tick();
+          MOT_Winch.tick();
+          
         }
-        else
-          stopAllMotors();
+        //else
+          //stopAllMotors();
         break;
 
       default:
-        stopAllMotors();
+        //stopAllMotors();
         break;
       }
     }
   }
-  else
+  /*else
   {
     stopAllMotors();
-  }
+  }*/
 }
 
-void stopAllMotors()
+/*void stopAllMotors()
 {
-  MOT_Bridge.setSpeedPerc(0);
-  MOT_Trolley.setSpeedPerc(0);
-  MOT_Winch.setSpeedPerc(0);
+  //delay(2.5);
+
+  MOT_Bridge.setSpeed(0);
+  MOT_Trolley.setSpeed(0);
+  MOT_Winch.setSpeed(0);
+  
+  MOT_Bridge.tick();
+  MOT_Trolley.tick();
+  MOT_Winch.tick();
+
+  
+
 }
 
 void ping()
@@ -139,4 +171,4 @@ void ping()
   UDP.beginPacket(WiFi.gatewayIP(), __PORT);
   UDP.printf(HELLO_MSG);
   UDP.endPacket();
-}
+}*/
